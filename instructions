@@ -1,0 +1,74 @@
+temps simulé
+
+boucle tant que qqc dans la boucle
+	pparametre (localisation)
+
+structure efficace : acces rapide sur le minimum
+
+est ce uqe la simulation se termine?
+
+cout instanciation
+cout synchronisation
+
+PPC dans la gestion du serveur 
+
+plusieurs clients se connectent au serveur et donnent les paramètres de la simulation
+
+agents sur une carte de 500x500
+	faire attention à 1policier par un carré
+
+interventions qui prennent des temps plus ou moins long
+ronde sur la carte
+
+centrale qui appelle les egents
+	verifie si agent disponible en inter ou de repos
+
+deplacement sur la carte
+ETAPES de INTERVENTION:
+
+evenement départ (loc + inter à faire)
+event retour
+
+goroutine:
+plusieurs calculs complexes
+	sortir l'arme?
+	ou il faut aller ?
+###MAin
+boucle qui ajoute les evenements dans une variable
+
+###
+
+#role 1 Amélie
+ génération d'evenements de manière aléatoire
+	borne de temps 0s < taléatoire < 30s
+	object intervention:
+		temps défini
+		localisation
+		?nb agent necessaire
+
+details dans le code
+	fonction New event
+		Proba P(x) de generer un evenement pendant tmax
+
+#Role 2 (prio 1)
+Creation classe intervention
+
+	attribut de la classe (par ex: temps d'intervention: random ?)
+		loc
+		temps intervention
+		
+# Role 3 
+e_d : evenement départ
+e_a : evênement arrivée
+
+utilisation de Heap
+
+liste_sdo : structure de données des éléments en cours [e_d1, e_a1]
+
+fonctionMin qui ajoute des evenements
+	 - retire min de la liste et traite les csq--> départ, arrivée,
+		--> ajoute e_d e_a dans la liste_sdo
+	
+	
+
+
