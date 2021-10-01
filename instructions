@@ -50,14 +50,14 @@ details dans le code
 	fonction New event
 		Proba P(x) de generer un evenement pendant tmax
 
-#Role 2 (prio 1)
+#Role 2 (prio 1) Alex
 Creation classe intervention
 
 	attribut de la classe (par ex: temps d'intervention: random ?)
 		loc
 		temps intervention
 		
-# Role 3 
+# Role 3 Nicolas
 e_d : evenement départ
 e_a : evênement arrivée
 
