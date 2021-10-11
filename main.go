@@ -67,6 +67,7 @@ func Example_priorityQueue() {
 	// Insert a new event and then modify its priority.	
 	var event4 = Event{int(60),[2]int{3, 4}, [2]int{1, 2}, int(1)}
 	heap.Push(&pq, &event4)
+	pq.newEvent(int(160),[2]int{3, 4}, int(6))
 	// Take the items out; they arrive in increasing priority order.
 	for pq.Len() > 0 {
 		event := heap.Pop(&pq).(*Event)
@@ -76,19 +77,23 @@ func Example_priorityQueue() {
 	}
 }
 
-func newEvent(temp_event int, origine [2]int, localisation [2]int, agents_required int) {
+func (pq *PriorityQueue) newEvent(temp_event int, origine [2]int, agents_required int) {
 	proba := rand.Float64()
 	lim_proba := 0.5 // est la proba d'avoir une intervention qui pop, à determiner en fonction de la fréquence des inter voulues
 
 	// si la proba est inf à P(event), on instance une structure de classe event
 	if proba < lim_proba {
+		positionx := rand.Intn(500)
+		positiony := rand.Intn(500)
+		localisation:=[2]int{positionx,positiony}
 		event := Event{temp_event, origine, localisation, agents_required}
+
 		fmt.Println("c'est bon")
 		// est ce qu'il serait judicieux de retourner un true quand il y a une intervention?
 
 		fmt.Println(event.origine)
 
-		// TODO : add event to heap
+		heap.Push(pq, &event)// done : add event to heap
 
 	}
 
