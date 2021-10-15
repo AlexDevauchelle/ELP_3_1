@@ -40,47 +40,50 @@ func (pq *PriorityQueue) update(event *Event, temp_event int) { //change le temp
 	heap.Fix(pq, event.temp_event)
 }
 func Example_priorityQueue() {
-	var event1 = Event{int(100), [2]int{1, 2}, [2]int{3, 4}, int(2)}
-	var event2 = Event{int(20), [2]int{3, 4}, [2]int{1, 2}, int(3)}
-	var event3 = Event{int(50), [2]int{3, 4}, [2]int{1, 2}, int(2)}
+	var event1 = Event{int(100),"depart",[2]int{1, 2}, [2]int{3, 4}}
+	var event2 = Event{ int(20),"tirage",[2]int{3, 4}, [2]int{1, 2}}
+	var event3 = Event{int(50),"depart", [2]int{3, 4}, [2]int{1, 2}}
 
-	events := [3]Event{event1, event2, event3}
+	events := [3]Event{event1,event2,event3}
 	// Create a priority queue, put the events in it, and
 	pq := make(PriorityQueue, len(events))
-	for i := 0; i < pq.Len(); i++ {
-		pq[i] = &events[i]
+	for i := 0;i<pq.Len();i++  {
+		pq[i] = &events[i]	
 	}
 	heap.Init(&pq)
-	// Insert a new event and then modify its priority.
-	var event4 = Event{int(60), [2]int{3, 4}, [2]int{1, 2}, int(1)}
+	// Insert a new event and then modify its priority.	
+	var event4 = Event{int(60),"depart",[2]int{3, 4}, [2]int{1, 2}}
 	heap.Push(&pq, &event4)
-	pq.newEvent(int(160), [2]int{3, 4}, int(6))
+	pq.newEvent(int(20))
 	// Take the items out; they arrive in increasing priority order.
 	for pq.Len() > 0 {
 		event := heap.Pop(&pq).(*Event)
 		fmt.Println("--------------------------------------------------")
-		fmt.Printf("l'évènement a lieu au temps %d et requiert %d agents", event.temp_event, event.agents_required)
+		fmt.Printf("l'évènement a lieu au tempss %d et est de genre %d agents",event.temps_event,event.genre)
 		fmt.Println(".")
 	}
 }
 
-func (pq *PriorityQueue) newEvent(temp_event int, origine [2]int, agents_required int) {
+func (pq *PriorityQueue) newEvent(temps_event int) {
+	nouveauTirage := Event{temps_event+5,"tirage",[2]int{0,0},[2]int{0,0}}
+	heap.Push(pq, &nouveauTirage)
 	proba := rand.Float64()
 	lim_proba := 0.5 // est la proba d'avoir une intervention qui pop, à determiner en fonction de la fréquence des inter voulues
 
 	// si la proba est inf à P(event), on instance une structure de classe event
 	if proba < lim_proba {
+		origine :=[2]int{0,0}
 		positionx := rand.Intn(500)
 		positiony := rand.Intn(500)
-		localisation := [2]int{positionx, positiony}
-		event := Event{temp_event, origine, localisation, agents_required}
+		localisation:=[2]int{positionx,positiony}
+		event := Event{temps_event+2,"depart", origine, localisation}
 
 		fmt.Println("c'est bon")
 		// est ce qu'il serait judicieux de retourner un true quand il y a une intervention?
 
 		fmt.Println(event.origine)
 
-		heap.Push(pq, &event) // done : add event to heap
+		heap.Push(pq, &event)// done : add event to heap
 
 	}
 
