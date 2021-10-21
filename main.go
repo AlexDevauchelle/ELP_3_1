@@ -3,9 +3,18 @@ package main
 import (
 	"container/heap"
 	"fmt"
+	"image"
+	"image/color"
+	"image/png"
 	"math/rand"
+	"os"
 	"time"
 )
+
+const dimension = 21
+const waitTime = 1000
+
+var ma_map [dimension][dimension]int
 
 type Event struct {
 	temps_event int
@@ -68,7 +77,7 @@ func Example_priorityQueue() {
 
 func (pq *PriorityQueue) gestionTirage(temps_event int) {
 	fmt.Printf("Temps %d : Un tirage à lieu !\n", temps_event)
-	nouveauTirage := Event{temps_event + 5, "tirage", [2]int{0, 0}, [2]int{0, 0}, [2]int{0, 0}}
+	nouveauTirage := Event{temps_event + 30, "tirage", [2]int{0, 0}, [2]int{0, 0}, [2]int{0, 0}}
 	heap.Push(pq, &nouveauTirage)
 
 	proba := rand.Float64()
@@ -77,9 +86,9 @@ func (pq *PriorityQueue) gestionTirage(temps_event int) {
 	// si la proba est inf à P(event), on instance une structure de classe event
 	if proba < lim_proba {
 
-		origine := [2]int{250, 250}
-		positionx := rand.Intn(500)
-		positiony := rand.Intn(500)
+		origine := [2]int{(dimension - 1) / 2, (dimension - 1) / 2}
+		positionx := rand.Intn((dimension - 1))
+		positiony := rand.Intn((dimension - 1))
 		destination := [2]int{positionx, positiony}
 		event := Event{temps_event + 2, "depart", origine, origine, destination}
 
@@ -95,8 +104,6 @@ func (pq *PriorityQueue) gestionTirage(temps_event int) {
 func (pq *PriorityQueue) gestionDepart(depart Event) {
 
 	deplacement := Event{temps_event: depart.temps_event + rand.Intn(5), genre: "deplacement", origine: depart.origine, position: depart.origine, destination: depart.destination}
-
-	//retour := Event{temps_event: depart.temps_event + rand.Intn(20), genre: "retour", origine: depart.origine,position:depart.origine, destination: depart.destination}
 
 	heap.Push(pq, &deplacement)
 	fmt.Printf("Temps %d : Un agent part de %d sur une intervention en %d !\n", depart.temps_event, depart.origine, depart.destination)
@@ -127,16 +134,35 @@ func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event) {
 
 	if (next_pos[0] == pDeplacement.destination[0]) && (next_pos[1] == pDeplacement.destination[1]) { // Si la prochaine position est la destination alors soit arrive event soit retour event
 
-		if (250 == pDeplacement.destination[0]) && (250 == pDeplacement.destination[1]) { //Si la destination est la centrale alors -> Arrive Event
+		if ((dimension-1)/2 == pDeplacement.destination[0]) && ((dimension-1)/2 == pDeplacement.destination[1]) { //Si la destination est la centrale alors -> Arrive Event
+			if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) {
+				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
+			}
+
 			arrive := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "arrive", origine: pDeplacement.destination, position: pDeplacement.destination, destination: pDeplacement.origine}
 			heap.Push(pq, &arrive)
 
 		} else { // Sinon -> Retour Event
+			if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) { //Si la position actuel n'est pas la centrale
+				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
+			}
+			if (next_pos[0] != (dimension-1)/2) && (next_pos[1] != (dimension-1)/2) { //Si la prochaine position n'est pas la centrale
+				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
+			}
+			ma_map[next_pos[0]][next_pos[1]] = 3 //On occupe la nouvelle position de l'agent avec le code d'intervention => 3
+
+			ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
+
 			retour := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "retour", origine: pDeplacement.destination, position: pDeplacement.destination, destination: pDeplacement.origine}
 			heap.Push(pq, &retour)
 		}
 
 	} else { //Sinon deplacement
+		if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) {
+			ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
+		}
+		ma_map[next_pos[0]][next_pos[1]] = 1 //On occupe la nouvelle position de l'agent avec le code de deplacement => 0
+
 		nDeplacement := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "deplacement", origine: pDeplacement.origine, position: next_pos, destination: pDeplacement.destination}
 		heap.Push(pq, &nDeplacement)
 
@@ -158,7 +184,7 @@ func (pq *PriorityQueue) gestionRetour(e Event) {
 func (pq *PriorityQueue) gestionHeap() {
 
 	for {
-		time.Sleep(1000 * time.Millisecond)
+		time.Sleep(waitTime * time.Millisecond)
 
 		if pq.Len() > 0 {
 
@@ -182,6 +208,7 @@ func (pq *PriorityQueue) gestionHeap() {
 			if event.genre == "arrive" {
 				fmt.Printf("Temps %d : Un agent est rentré à la centrale !\n", event.temps_event)
 			}
+			printMap()
 
 		} else {
 			return
@@ -191,10 +218,74 @@ func (pq *PriorityQueue) gestionHeap() {
 
 }
 
-func main() {
-	//e := Event{temps_event: 10, genre: "tirage", origine: [2]int{0, 0},position :  [2]int{0, 0}, destination: [2]int{0, 0}}
+func updateImage() {
 
-	e := Event{temps_event: 10, genre: "depart", origine: [2]int{250, 250}, position: [2]int{250, 250}, destination: [2]int{255, 255}}
+	width := len(ma_map[0])
+	height := len(ma_map)
+
+	upLeft := image.Point{0, 0}
+	lowRight := image.Point{width, height}
+
+	img := image.NewRGBA(image.Rectangle{upLeft, lowRight})
+
+	red := color.RGBA{255, 0, 0, 0xff}
+
+	blue := color.RGBA{0, 0, 255, 0xff}
+
+	// Set color for each pixel.
+	for y := 0; y < len(ma_map); y++ {
+		for x := 0; x < len(ma_map[0]); x++ {
+			switch {
+			case ma_map[y][x] == 0: // case vide
+				img.Set(x, y, color.Black)
+			case ma_map[y][x] == 1: // case deplacement
+				img.Set(x, y, color.White)
+			case ma_map[y][x] == 3: // case intervention
+				img.Set(x, y, red)
+			case ma_map[y][x] == 9: // case centrale
+				img.Set(x, y, blue)
+			default:
+				// Use zero value.
+			}
+		}
+	}
+
+	// Encode as PNG.
+	f, _ := os.Create("image.png")
+	png.Encode(f, img)
+
+}
+
+func printMap() {
+
+	output := ""
+	for y := 0; y < len(ma_map); y++ {
+		for x := 0; x < len(ma_map[0]); x++ {
+			switch {
+			case ma_map[y][x] == 0: // case vide
+				output += " "
+			case ma_map[y][x] == 1: // case deplacement
+				output += "1"
+			case ma_map[y][x] == 3: // case intervention
+				output += "X"
+			case ma_map[y][x] == 9: // case centrale
+				output += "C"
+			default:
+				// Use zero value.
+			}
+
+		}
+		output += "\n"
+	}
+	fmt.Printf(output)
+}
+
+func main() {
+	ma_map[(dimension-1)/2][(dimension-1)/2] = 9
+
+	//e := Event{temps_event: 10, genre: "tirage", origine: [2]int{0, 0}, position: [2]int{0, 0}, destination: [2]int{0, 0}}
+
+	e := Event{temps_event: 10, genre: "depart", origine: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, position: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, destination: [2]int{((dimension - 1) / 2) + 5, ((dimension - 1) / 2) + 5}}
 
 	tab_event := [1]Event{e}
 
