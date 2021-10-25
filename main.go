@@ -280,6 +280,26 @@ func printMap() {
 	fmt.Printf(output)
 }
 
+func managecollision() {
+	//Au lieu de calculer un Dijkstra à chaque deplacement de case de l'agent, ce qui serait couteux en temps, on va implementer une fonction qui gère les collisions
+	tentative_deplacement := 0
+
+	//si la prochaine case indiquée par la fonction gestiondéplacement est dispo
+	//if next_pos == 0 {
+		//deplacement sur la prochaine case N+1
+		//case N passe à 0
+	}
+	//si l'agent ne peut pas se deplacer
+	if tentative_deplacement == 3 {
+		fmt.Println("le plateau est chargé, l'agent fait une pause sur sa case.")
+		time.Sleep(8 * time.Second) // on attend un nombre n de secondes pour que le plateau se libère
+
+	} else {
+		//run la fonction gestiondeplacement
+		tentative_deplacement++
+	}
+}
+
 func main() {
 	ma_map[(dimension-1)/2][(dimension-1)/2] = 9
 
