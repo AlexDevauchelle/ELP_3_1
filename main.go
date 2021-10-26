@@ -90,13 +90,12 @@ func (pq *PriorityQueue) gestionTirage(temps_event int) {
 		origine := [2]int{(dimension - 1) / 2, (dimension - 1) / 2}
 		positionx := rand.Intn((dimension - 1))
 		positiony := rand.Intn((dimension - 1))
-		destination := [2]int{positionx, positiony}
-		event := Event{temps_event + 2, "depart", origine, origine, destination,0}
-
-		fmt.Printf("Temps %d : Un départ aura lieu au temps %d en destination de %d!\n", temps_event, temps_event+2, destination)
-		// est ce qu'il serait judicieux de retourner un true quand il y a une intervention?
-
-		heap.Push(pq, &event) //  add event to heap
+		if ((dimension-1)/2 != positionx || ((dimension-1)/2 != positiony)){
+			destination := [2]int{positionx, positiony}
+			event := Event{temps_event + 2, "depart", origine, origine, destination,0}
+			fmt.Printf("Temps %d : Un départ aura lieu au temps %d en destination de %d!\n", temps_event, temps_event+2, destination)
+			heap.Push(pq, &event) //  add event to heap
+		}
 
 	}
 
@@ -112,37 +111,23 @@ func (pq *PriorityQueue) gestionDepart(depart Event) {
 }
 
 func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event , next_pos [2]int) {
-
+	if ((dimension-1)/2 != pDeplacement.position[0]) || ((dimension-1)/2 != pDeplacement.position[1]) {//si l'agent n'est pas à la centrale à l'origine
+		ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0
+	}
 	if (next_pos[0] == pDeplacement.destination[0]) && (next_pos[1] == pDeplacement.destination[1]) { // Si la prochaine position est la destination alors soit arrive event soit retour event
 		if ((dimension-1)/2 == pDeplacement.destination[0]) && ((dimension-1)/2 == pDeplacement.destination[1]) { //Si la destination est la centrale alors -> Arrive Event
-			if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) {
-				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
-			}
-
 			arrive := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "arrive", origine: pDeplacement.destination, position: pDeplacement.destination, destination: pDeplacement.origine, tentative_deplacement : 0}
 			heap.Push(pq, &arrive)
 		} else { // Sinon -> Retour Event
-			if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) { //Si la position actuel n'est pas la centrale
-				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
-			}
-			if (next_pos[0] != (dimension-1)/2) && (next_pos[1] != (dimension-1)/2) { //Si la prochaine position n'est pas la centrale
-				ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
-			}
 			ma_map[next_pos[0]][next_pos[1]] = 3 //On occupe la nouvelle position de l'agent avec le code d'intervention => 3
-			ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
 			retour := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "retour", origine: pDeplacement.destination, position: pDeplacement.destination, destination: pDeplacement.origine, tentative_deplacement : 0}
 			heap.Push(pq, &retour)
 		}
 
 	} else { //Sinon deplacement
-		if (pDeplacement.position[0] != (dimension-1)/2) || (pDeplacement.position[1] != (dimension-1)/2) {
-			ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0 // On clear la position actuel de l'agent sur la map
-		}
 		ma_map[next_pos[0]][next_pos[1]] = 1 //On occupe la nouvelle position de l'agent avec le code de deplacement => 0
-
 		nDeplacement := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "deplacement", origine: pDeplacement.origine, position: next_pos, destination: pDeplacement.destination, tentative_deplacement : 0}
 		heap.Push(pq, &nDeplacement)
-
 	}
 	fmt.Printf("Temps %d : Un agent en %d se deplace en %d !\n", pDeplacement.temps_event, pDeplacement.position, next_pos)
 }
@@ -205,9 +190,8 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event) {
 		}
 	}
 	if xActuel==next_pos[0] && yActuel==next_pos[1]{
-		pDeplacement.tentative_deplacement += 1
-		nDeplacement := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "deplacement", origine: pDeplacement.origine, position: next_pos, destination: pDeplacement.destination, tentative_deplacement : pDeplacement.tentative_deplacement}
-		heap.push(pq,nDeplacement)
+		deplacement := Event{pDeplacement.temps_event + rand.Intn(5), "deplacement", pDeplacement.origine, pDeplacement.position,pDeplacement.destination,pDeplacement.tentative_deplacement+1 }
+		heap.Push(pq, &deplacement)
 	}else {
 		if deplacement_vers_objectif{
 			pDeplacement.tentative_deplacement=0
