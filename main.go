@@ -206,6 +206,8 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event) {
 	}
 	if xActuel==next_pos[0] && yActuel==next_pos[1]{
 		pDeplacement.tentative_deplacement += 1
+		nDeplacement := Event{temps_event: pDeplacement.temps_event + rand.Intn(5), genre: "deplacement", origine: pDeplacement.origine, position: next_pos, destination: pDeplacement.destination, tentative_deplacement : pDeplacement.tentative_deplacement}
+		heap.push(pq,nDeplacement)
 	}else {
 		if deplacement_vers_objectif{
 			pDeplacement.tentative_deplacement=0
