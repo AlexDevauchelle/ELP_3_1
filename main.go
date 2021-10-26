@@ -12,7 +12,7 @@ import (
 )
 
 const dimension = 21
-const waitTime = 1000
+const waitTime = 50
 
 var ma_map [dimension][dimension]int
 
@@ -135,26 +135,30 @@ func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event , next_pos [2]int
 func (pq *PriorityQueue) managecollision(pDeplacement Event) {
 	//Au lieu de calculer un Dijkstra à chaque deplacement de case de l'agent, ce qui serait couteux en temps, on va implementer une fonction qui gère les collisions
 	destination := [2]int{pDeplacement.destination[0],pDeplacement.destination[1]}
+	xActuel:=pDeplacement.position[0]
+	yActuel:=pDeplacement.position[1]
 	deplacement_vers_objectif := true
-	if pDeplacement.tentative_deplacement>3{//on regarde si on est pas bloqué depuis trop longtemps
-		destination[0] -= 2
-		destination[1] -= 2
+	if pDeplacement.tentative_deplacement>3{//on regarde si on est pas bloqué depuis trop longtemps, si oui on définis une nouvelle destination à atteindre pour ce tour
+		if xActuel > destination[0]{
+			destination[0] = xActuel+1
+		}else{
+			destination[0] = xActuel-1
+		}
+		if yActuel > destination[1]{
+			destination[1] = yActuel+1
+		}else {
+			destination[1] = yActuel-1
+		}
 		deplacement_vers_objectif = false
-		if rand.Intn(100)<33{//rends plus ou moins aléatoire le nombre de fois où l'agent va reculer
+		if rand.Intn(100)<60{//rends plus ou moins aléatoire le nombre de fois où l'agent va reculer
 			pDeplacement.tentative_deplacement=0
 		}
 	}
-	xActuel:=pDeplacement.position[0]
-	yActuel:=pDeplacement.position[1]
 	//regarde les alentours
-	north := ma_map[xActuel][yActuel+1]==0 ||  ma_map[xActuel][yActuel+1]==9
-	south := ma_map[xActuel][yActuel-1]==0 || ma_map[xActuel][yActuel-1]==9
-	east := ma_map[xActuel+1][yActuel]==0 || ma_map[xActuel+1][yActuel]==9
-	west := ma_map[xActuel-1][yActuel]==0 || ma_map[xActuel-1][yActuel]==9 
-
-	next_pos := [2]int{xActuel, yActuel}
-	x_or_y:=rand.Intn(2)
-	//essaye de se déplacer
+	north := false
+	south := false
+	east := false
+	west := false
 	if x_or_y==1{
 		if yActuel == destination[1] {
 			//Deplacement en X
