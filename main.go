@@ -11,10 +11,13 @@ import (
 	"time"
 )
 
-const dimension = 21
+var dimension = 21
+
+var time_limit = 250
+
 const waitTime = 50
 
-var ma_map [dimension][dimension]int
+var ma_map [][]int
 
 type Event struct {
 	temps_event           int
@@ -240,6 +243,12 @@ func (pq *PriorityQueue) gestionHeap() {
 
 			event := heap.Pop(pq).(*Event)
 
+			if event.temps_event >= time_limit {
+				fmt.Printf("Temps %d : Simulation terminée !\n", time_limit)
+				printMap()
+				break
+			}
+
 			if event.genre == "tirage" {
 				pq.gestionTirage(event.temps_event)
 			}
@@ -330,10 +339,21 @@ func printMap() {
 	fmt.Printf(output)
 }
 
-func main() {
+func start_simu(taille_map int, temps_simu int) {
+	dimension = taille_map
+	time_limit = temps_simu
+
+	for y := 0; y < dimension; y++ {
+		ma_map = append(ma_map, []int{})
+		for x := 0; x < dimension; x++ {
+			ma_map[y] = append(ma_map[y], 0)
+
+		}
+	}
+
 	ma_map[(dimension-1)/2][(dimension-1)/2] = 9
 
-	e := Event{temps_event: 10, genre: "tirage", origine: [2]int{0, 0}, position: [2]int{0, 0}, destination: [2]int{0, 0}, tentative_deplacement: 0}
+	e := Event{temps_event: 1, genre: "tirage", origine: [2]int{0, 0}, position: [2]int{0, 0}, destination: [2]int{0, 0}, tentative_deplacement: 0}
 
 	//e := Event{temps_event: 10, genre: "depart", origine: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, position: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, destination: [2]int{((dimension - 1) / 2) + 5, ((dimension - 1) / 2) + 5}, tentative_deplacement : 0}
 
@@ -346,4 +366,8 @@ func main() {
 	heap.Init(&pq)
 	pq.gestionHeap()
 
+}
+
+func main() {
+	start_simu(21, 10)
 }
