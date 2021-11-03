@@ -1,14 +1,13 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net"
 	"os"
 	"strconv"
-	"bufio"
-    "strings"
-    "time"
+	"strings"
 )
 
 func getArgs() int {
@@ -27,7 +26,7 @@ func getArgs() int {
 		}
 
 	}
-    //Should never be reached
+	//Should never be reached
 	return -1
 }
 
@@ -43,23 +42,85 @@ func main() {
 		os.Exit(1)
 	} else {
 
-        defer conn.Close()
-        reader := bufio.NewReader(conn)
-		fmt.Printf("#DEBUG MAIN connected\n")
-        for i:= 0; i < 10; i++{
+		defer conn.Close()
+		reader := bufio.NewReader(conn)
+		//fmt.Printf("#DEBUG MAIN connected\n")
 
-            io.WriteString(conn, fmt.Sprintf("Coucou %d\n", i))
-            
-            resultString, err := reader.ReadString('\n')
-            if (err != nil){
-                fmt.Printf("DEBUG MAIN could not read from server")
-                os.Exit(1)
-            }
-            resultString = strings.TrimSuffix(resultString, "\n")
-            fmt.Printf("#DEBUG server replied : |%s|\n", resultString)
-            time.Sleep(1000 * time.Millisecond)
-            
-    }
+		input := bufio.NewReader(os.Stdin)
+
+		fmt.Printf("Quelle est la taille de la carte ?\n") // Question to the user
+		taille_map, err1 := input.ReadString('\n')
+		if err1 != nil {
+			fmt.Printf("DEBUG MAIN could not read taille_map from stdIn")
+			os.Exit(1)
+		}
+		//taille_map = strings.TrimSuffix(taille_map, "\n")
+
+		io.WriteString(conn, fmt.Sprintf(taille_map))
+
+		fmt.Printf("Quelle est la durée de la simulation ?\n") // Question to the user
+		temps_sim, err2 := input.ReadString('\n')
+		if err2 != nil {
+			fmt.Printf("DEBUG MAIN could not read temps_sim from stdIn")
+			os.Exit(1)
+		}
+		//temps_sim = strings.TrimSuffix(temps_sim, "\n")
+
+		//tabstring := []string{taille_map, temps_sim}
+
+		//varString := strings.Join(tabstring, ",")
+		//fmt.Printf(varString + "\n")
+
+		io.WriteString(conn, fmt.Sprintf(temps_sim))
+
+		resultString, err := reader.ReadString('$')
+		if err != nil {
+			fmt.Printf("DEBUG MAIN could not read from server")
+			os.Exit(1)
+		}
+		resultString = strings.TrimSuffix(resultString, "$")
+
+		fmt.Printf("%s\n", resultString)
+
+		for resultString != "End_Of_Connection" {
+			resultString, err := reader.ReadString('$')
+			if err != nil {
+				fmt.Printf("DEBUG MAIN could not read from server")
+				os.Exit(1)
+			}
+			resultString = strings.TrimSuffix(resultString, "$")
+
+			fmt.Printf("%s\n", resultString)
+
+		}
+
+		//io.WriteString(conn, fmt.Sprintf("Coucou %d\n", i))  -> ecrire
+
+		/*
+					resultString, err := reader.ReadString('\n')
+			            if (err != nil){
+			                fmt.Printf("DEBUG MAIN could not read from server")
+			                os.Exit(1)
+			            }
+			            resultString = strings.TrimSuffix(resultString, "\n")
+		*/
+		//=> lire
+
+		/*
+		    for i:= 0; i < 10; i++{
+
+		        io.WriteString(conn, fmt.Sprintf("Coucou %d\n", i))
+
+		        resultString, err := reader.ReadString('\n')
+		        if (err != nil){
+		            fmt.Printf("DEBUG MAIN could not read from server")
+		            os.Exit(1)
+		        }
+		        resultString = strings.TrimSuffix(resultString, "\n")
+		        fmt.Printf("#DEBUG server replied : |%s|\n", resultString)
+		        time.Sleep(1000 * time.Millisecond)
+
+		}*/
 
 	}
 
