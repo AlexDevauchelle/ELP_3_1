@@ -81,15 +81,12 @@ func handleConnection(connection net.Conn, connum int) {
 			fmt.Printf("#DEBUG %d RCV ERROR no panic, just a client\n", connum)
 			fmt.Printf("Error :|%s|\n", err.Error())
 		}
-
 		variables = strings.TrimSuffix(variables, "\n")
 		fmt.Printf("%s\n", variables)
 		time.Sleep(10000 * time.Millisecond)
 		tab_variables := strings.Split(variables, ",")
-
 		taille_map := tab_variables[0]
 		temps_sim := tab_variables[1]
-
 	*/
 
 	taille_map, err1 := connReader.ReadString('\n')
@@ -129,25 +126,18 @@ func handleConnection(connection net.Conn, connum int) {
 			fmt.Printf("#DEBUG %d temps_sim ne peut pas être convertit en interger\n", connum)
 			fmt.Printf("Error :|%s|\n", errts.Error())
 		}*/
+	var clientConn net.Conn
 	clientConn = connection
 
 	fmt.Printf("Début d'une simulation sur une map de taille %d avec un temps max de %d\n", tm, ts)
 	io.WriteString(connection, fmt.Sprintf("Début d'une simulation sur une map de taille %d avec un temps max de %d\n$", tm, ts))
-	start_simu(tm, ts)
+	start_simu(tm, ts, clientConn)
 
 	io.WriteString(connection, fmt.Sprintf("End_Of_Connection$"))
 
 }
 
-var clientConn net.Conn
-
-var dimension = 21
-
-var time_limit = 250
-
 const waitTime = 50
-
-var ma_map [][]int
 
 type Event struct {
 	temps_event           int
@@ -185,7 +175,7 @@ func (pq *PriorityQueue) update(event *Event, temp_event int) { //change le temp
 	heap.Fix(pq, event.temps_event)
 }
 
-func (pq *PriorityQueue) gestionTirage(temps_event int) {
+func (pq *PriorityQueue) gestionTirage(temps_event int, dimension int, clientConn net.Conn) {
 	io.WriteString(clientConn, fmt.Sprintf("Temps %d : Un tirage à lieu !\n$", temps_event))
 
 	//fmt.Printf("Temps %d : Un tirage à lieu !\n", temps_event)
@@ -214,7 +204,7 @@ func (pq *PriorityQueue) gestionTirage(temps_event int) {
 
 }
 
-func (pq *PriorityQueue) gestionDepart(depart Event) {
+func (pq *PriorityQueue) gestionDepart(depart Event, ma_map [][]int, clientConn net.Conn) {
 
 	deplacement := Event{temps_event: depart.temps_event + rand.Intn(5), genre: "deplacement", origine: depart.origine, position: depart.origine, destination: depart.destination, tentative_deplacement: 0}
 
@@ -225,7 +215,7 @@ func (pq *PriorityQueue) gestionDepart(depart Event) {
 
 }
 
-func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event, next_pos [2]int) {
+func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event, next_pos [2]int, dimension int, ma_map [][]int, clientConn net.Conn) {
 	if ((dimension-1)/2 != pDeplacement.position[0]) || ((dimension-1)/2 != pDeplacement.position[1]) { //si l'agent n'est pas à la centrale à l'origine
 		ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0
 	}
@@ -248,7 +238,7 @@ func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event, next_pos [2]int)
 	//fmt.Printf("Temps %d : Un agent en %d se deplace en %d !\n", pDeplacement.temps_event, pDeplacement.position, next_pos)
 }
 
-func (pq *PriorityQueue) managecollision(pDeplacement Event) {
+func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_map [][]int, clientConn net.Conn) {
 	//Au lieu de calculer un Dijkstra à chaque deplacement de case de l'agent, ce qui serait couteux en temps, on va implementer une fonction qui gère les collisions
 	destination := [2]int{pDeplacement.destination[0], pDeplacement.destination[1]}
 	deplacement_vers_objectif := true
@@ -332,12 +322,12 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event) {
 		if deplacement_vers_objectif {
 			pDeplacement.tentative_deplacement = 0
 		}
-		pq.gestionDeplacement(pDeplacement, next_pos)
+		pq.gestionDeplacement(pDeplacement, next_pos, dimension, ma_map, clientConn)
 	}
 
 }
 
-func (pq *PriorityQueue) gestionRetour(e Event) {
+func (pq *PriorityQueue) gestionRetour(e Event, clientConn net.Conn) {
 	io.WriteString(clientConn, fmt.Sprintf("Temps %d : Un agent est arrivé en %d sur l'intervention ! Il rentre en %d.\n$", e.temps_event, e.origine, e.destination))
 	//fmt.Printf("Temps %d : Un agent est arrivé en %d sur l'intervention ! Il rentre en %d.\n", e.temps_event, e.origine, e.destination)
 
@@ -347,7 +337,7 @@ func (pq *PriorityQueue) gestionRetour(e Event) {
 
 }
 
-func (pq *PriorityQueue) gestionHeap() {
+func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]int, clientConn net.Conn) {
 
 	for {
 		time.Sleep(waitTime * time.Millisecond)
@@ -359,30 +349,30 @@ func (pq *PriorityQueue) gestionHeap() {
 			if event.temps_event >= time_limit {
 				io.WriteString(clientConn, fmt.Sprintf("Temps %d : Simulation terminée !\n$", time_limit))
 				fmt.Printf("Temps %d : Simulation terminée !\n", time_limit)
-				printMap()
+				printMap(ma_map, clientConn)
 				break
 			}
 
 			if event.genre == "tirage" {
-				pq.gestionTirage(event.temps_event)
+				pq.gestionTirage(event.temps_event, dimension, clientConn)
 			}
 
 			if event.genre == "depart" {
-				pq.gestionDepart(*event)
+				pq.gestionDepart(*event, ma_map, clientConn)
 			}
 
 			if event.genre == "deplacement" {
-				pq.managecollision(*event)
+				pq.managecollision(*event, dimension, ma_map, clientConn)
 			}
 
 			if event.genre == "retour" {
-				pq.gestionRetour(*event)
+				pq.gestionRetour(*event, clientConn)
 			}
 			if event.genre == "arrive" {
 				io.WriteString(clientConn, fmt.Sprintf("Temps %d : Un agent est rentré à la centrale !\n$", event.temps_event))
 				//fmt.Printf("Temps %d : Un agent est rentré à la centrale !\n", event.temps_event)
 			}
-			printMap()
+			printMap(ma_map, clientConn)
 
 		} else {
 			return
@@ -392,7 +382,7 @@ func (pq *PriorityQueue) gestionHeap() {
 
 }
 
-func printMap() {
+func printMap(ma_map [][]int, clientConn net.Conn) {
 
 	output := ""
 	for y := 0; y < len(ma_map); y++ {
@@ -417,10 +407,10 @@ func printMap() {
 	//fmt.Printf(output)
 }
 
-func start_simu(taille_map int, temps_simu int) {
-	dimension = taille_map
-	time_limit = temps_simu
-
+func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {
+	var dimension = taille_map
+	var time_limit = temps_simu
+	var ma_map [][]int
 	for y := 0; y < dimension; y++ {
 		ma_map = append(ma_map, []int{})
 		for x := 0; x < dimension; x++ {
@@ -442,6 +432,6 @@ func start_simu(taille_map int, temps_simu int) {
 		pq[i] = &tab_event[i]
 	}
 	heap.Init(&pq)
-	pq.gestionHeap()
+	pq.gestionHeap(dimension, time_limit, ma_map, clientConn)
 
 }
