@@ -170,10 +170,6 @@ func (pq *PriorityQueue) Pop() interface{} { //donne l'élément prioritaire de 
 	*pq = old[0 : n-1]
 	return event
 }
-func (pq *PriorityQueue) update(event *Event, temp_event int) { //change le temps de trajet (possibilité de changer d'autre trucs)
-	event.temps_event = temp_event
-	heap.Fix(pq, event.temps_event)
-}
 
 func (pq *PriorityQueue) gestionTirage(temps_event int, dimension int, clientConn net.Conn) {
 	io.WriteString(clientConn, fmt.Sprintf("Temps %d : Un tirage à lieu !\n$", temps_event))
@@ -264,19 +260,20 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 	}
 	next_pos := [2]int{xActuel, yActuel}
 	x_or_y := rand.Intn(2)
-	if pDeplacement.tentative_deplacement > 3 { //on regarde si on est pas bloqué depuis trop longtemps
-		if yActuel < destination[1] && north {
+	if pDeplacement.tentative_deplacement > 3 { //on regarde si on est pas bloqué depuis trop longtemps et on décide de reculer si c'est le cas
+		if yActuel < destination[1] {
 			destination[1] = yActuel - 1
-		} else if south {
+		} else {
 			destination[1] = yActuel + 1
 		}
-		if xActuel < destination[0] && east {
+		if xActuel < destination[0] {
 			destination[0] = xActuel - 1
-		} else if west {
+		} else {
 			destination[0] = xActuel + 1
 		}
 		deplacement_vers_objectif = false
-		if rand.Intn(100) < 33 { //rends plus ou moins aléatoire le nombre de fois où l'agent va reculer
+		probaAvancer=33 //Proba d'avancer vers l'objectif au prochain coup
+		if rand.Intn(100) < probaAvancer { //rends plus ou moins aléatoire le nombre de fois où l'agent va reculer
 			pDeplacement.tentative_deplacement = 0
 		}
 	}
@@ -337,7 +334,7 @@ func (pq *PriorityQueue) gestionRetour(e Event, clientConn net.Conn) {
 
 }
 
-func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]int, clientConn net.Conn) {
+func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]int, clientConn net.Conn) {//insère un délais entre chaque action et effectue l'action liée à l'évènement en tête de liste
 
 	for {
 		time.Sleep(waitTime * time.Millisecond)
@@ -382,7 +379,7 @@ func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]i
 
 }
 
-func printMap(ma_map [][]int, clientConn net.Conn) {
+func printMap(ma_map [][]int, clientConn net.Conn) {//envoie au client la carte avec la position de chaque agent
 
 	output := ""
 	for y := 0; y < len(ma_map); y++ {
@@ -407,7 +404,7 @@ func printMap(ma_map [][]int, clientConn net.Conn) {
 	//fmt.Printf(output)
 }
 
-func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {
+func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {//commence une simulation et définis ses caractéristiques
 	var dimension = taille_map
 	var time_limit = temps_simu
 	var ma_map [][]int
@@ -418,12 +415,6 @@ func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {
 
 		}
 	}
-
-	ma_map[(dimension-1)/2][(dimension-1)/2] = 9
-
-	e := Event{temps_event: 1, genre: "tirage", origine: [2]int{0, 0}, position: [2]int{0, 0}, destination: [2]int{0, 0}, tentative_deplacement: 0}
-
-	//e := Event{temps_event: 10, genre: "depart", origine: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, position: [2]int{(dimension - 1) / 2, (dimension - 1) / 2}, destination: [2]int{((dimension - 1) / 2) + 5, ((dimension - 1) / 2) + 5}, tentative_deplacement : 0}
 
 	tab_event := [1]Event{e}
 
