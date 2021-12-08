@@ -212,7 +212,7 @@ func (pq *PriorityQueue) gestionDepart(depart Event, ma_map [][]int, clientConn 
 }
 
 func (pq *PriorityQueue) gestionDeplacement(pDeplacement Event, next_pos [2]int, dimension int, ma_map [][]int, clientConn net.Conn) {
-	if ((dimension-1)/2 != pDeplacement.position[0]) || ((dimension-1)/2 != pDeplacement.position[1]) { //si l'agent n'est pas à la centrale à l'origine
+	if ((dimension-1)/2 != pDeplacement.position[0]) || ((dimension-1)/2 != pDeplacement.position[1]) { //si l'agent n'est pas à la centrale à l'origine on clear sa position
 		ma_map[pDeplacement.position[0]][pDeplacement.position[1]] = 0
 	}
 	if (next_pos[0] == pDeplacement.destination[0]) && (next_pos[1] == pDeplacement.destination[1]) { // Si la prochaine position est la destination alors soit arrive event soit retour event
@@ -259,7 +259,7 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 		west = ma_map[xActuel-1][yActuel] == 0 || ma_map[xActuel-1][yActuel] == 9
 	}
 	next_pos := [2]int{xActuel, yActuel}
-	x_or_y := rand.Intn(2)
+	
 	if pDeplacement.tentative_deplacement > 3 { //on regarde si on est pas bloqué depuis trop longtemps et on décide de reculer si c'est le cas
 		if yActuel < destination[1] {
 			destination[1] = yActuel - 1
@@ -277,8 +277,9 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 			pDeplacement.tentative_deplacement = 0
 		}
 	}
-	//essaye de se déplacer
-	if x_or_y == 1 {
+	
+	x_or_y := rand.Intn(2)
+	if x_or_y == 1 { //gestion aléatoire d'un déplacement en x ou y
 		if yActuel == destination[1] {
 			//Deplacement en X
 			if xActuel > destination[0] && west {
@@ -312,7 +313,7 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 			}
 		}
 	}
-	if xActuel == next_pos[0] && yActuel == next_pos[1] {
+	if xActuel == next_pos[0] && yActuel == next_pos[1] { //On regarde si l'agent s'est déplacé, si non, on augmente le nombre de tentative de déplacement de 1
 		deplacement := Event{pDeplacement.temps_event + rand.Intn(5), "deplacement", pDeplacement.origine, pDeplacement.position, pDeplacement.destination, pDeplacement.tentative_deplacement + 1}
 		heap.Push(pq, &deplacement)
 	} else {
