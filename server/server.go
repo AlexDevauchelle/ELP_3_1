@@ -259,7 +259,7 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 		west = ma_map[xActuel-1][yActuel] == 0 || ma_map[xActuel-1][yActuel] == 9
 	}
 	next_pos := [2]int{xActuel, yActuel}
-	
+
 	if pDeplacement.tentative_deplacement > 3 { //on regarde si on est pas bloqué depuis trop longtemps et on décide de reculer si c'est le cas
 		if yActuel < destination[1] {
 			destination[1] = yActuel - 1
@@ -272,12 +272,12 @@ func (pq *PriorityQueue) managecollision(pDeplacement Event, dimension int, ma_m
 			destination[0] = xActuel + 1
 		}
 		deplacement_vers_objectif = false
-		probaAvancer=33 //Proba d'avancer vers l'objectif au prochain coup
+		probaAvancer := 33                 //Proba d'avancer vers l'objectif au prochain coup
 		if rand.Intn(100) < probaAvancer { //rends plus ou moins aléatoire le nombre de fois où l'agent va reculer
 			pDeplacement.tentative_deplacement = 0
 		}
 	}
-	
+
 	x_or_y := rand.Intn(2)
 	if x_or_y == 1 { //gestion aléatoire d'un déplacement en x ou y
 		if yActuel == destination[1] {
@@ -335,7 +335,7 @@ func (pq *PriorityQueue) gestionRetour(e Event, clientConn net.Conn) {
 
 }
 
-func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]int, clientConn net.Conn) {//insère un délais entre chaque action et effectue l'action liée à l'évènement en tête de liste
+func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]int, clientConn net.Conn) { //insère un délais entre chaque action et effectue l'action liée à l'évènement en tête de liste
 
 	for {
 		time.Sleep(waitTime * time.Millisecond)
@@ -380,7 +380,7 @@ func (pq *PriorityQueue) gestionHeap(dimension int, time_limit int, ma_map [][]i
 
 }
 
-func printMap(ma_map [][]int, clientConn net.Conn) {//envoie au client la carte avec la position de chaque agent
+func printMap(ma_map [][]int, clientConn net.Conn) { //envoie au client la carte avec la position de chaque agent
 
 	output := ""
 	for y := 0; y < len(ma_map); y++ {
@@ -405,7 +405,7 @@ func printMap(ma_map [][]int, clientConn net.Conn) {//envoie au client la carte 
 	//fmt.Printf(output)
 }
 
-func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {//commence une simulation et définis ses caractéristiques
+func start_simu(taille_map int, temps_simu int, clientConn net.Conn) { //commence une simulation et définis ses caractéristiques
 	var dimension = taille_map
 	var time_limit = temps_simu
 	var ma_map [][]int
@@ -416,6 +416,10 @@ func start_simu(taille_map int, temps_simu int, clientConn net.Conn) {//commence
 
 		}
 	}
+
+	ma_map[(dimension-1)/2][(dimension-1)/2] = 9
+
+	e := Event{temps_event: 1, genre: "tirage", origine: [2]int{0, 0}, position: [2]int{0, 0}, destination: [2]int{0, 0}, tentative_deplacement: 0}
 
 	tab_event := [1]Event{e}
 
